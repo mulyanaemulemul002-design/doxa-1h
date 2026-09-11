@@ -1,0 +1,1 @@
+- [Git history](git-history.md) — local clones may start shallow; fetch the full history before diagnosing missing commits.

@@ -1,0 +1,13 @@
+{
+  "chainId": 5042002,
+  "network": "Arc Testnet",
+  "address": "0x1fbaaf6fb624d975e89c6e12313a161c38c15904",
+  "deployer": "0x662ddf7D320B229f701E5E628e3FF6dec9c05855",
+  "admin": "0x662ddf7D320B229f701E5E628e3FF6dec9c05855",
+  "treasury": "0x4b1060F52C4AF453d02826cd855f4866A6735190",
+  "graduationTargetUsdc": "10000",
+  "feeBps": 100,
+  "transactionHash": "0xf60cef6b2e36954bfc47f3af1feb3305295ca43c7b6478811ef4b9c844d062fd",
+  "blockNumber": "61439997",
+  "explorerUrl": "https://testnet.arcscan.app/address/0x1fbaaf6fb624d975e89c6e12313a161c38c15904"
+}
