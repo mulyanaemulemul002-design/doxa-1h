@@ -144,7 +144,7 @@ function Logo() {
 function Header({ wallet, onConnect, isConnecting }: { wallet: WalletState; onConnect: () => void; isConnecting: boolean }) {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
-  return <header className="site-header"><div className="header-inner"><Logo /><nav className={menuOpen ? 'nav open' : 'nav'}>{navItems.map((item) => <Link key={item.to} className={location.pathname === item.to ? 'active' : ''} to={item.to} onClick={() => setMenuOpen(false)}>{item.label}</Link>)}{wallet.account && <Link className={location.pathname === '/wallet' ? 'active' : ''} to="/wallet" onClick={() => setMenuOpen(false)}>Wallet</Link>}</nav><div className="header-actions"><button className="network"><span className="status-dot" /> ARC testnet <ChevronDown size={14} /></button>{wallet.account ? <Link className="connect" to="/wallet"><Wallet size={15} /> {formatWalletAddress(wallet.account)}</Link> : <button className="connect" onClick={onConnect} disabled={isConnecting}><Wallet size={15} /> {isConnecting ? 'Connecting...' : 'Connect wallet'}</button>}</div><button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={20} /> : <Menu size={20} />}</button></div>{wallet.error && <div className="container wallet-error" role="status">{wallet.error}</div>}</header>
+  return <header className="site-header"><div className="header-inner"><Logo /><nav className={menuOpen ? 'nav open' : 'nav'}>{navItems.map((item) => <Link key={item.to} className={location.pathname === item.to ? 'active' : ''} to={item.to} onClick={() => setMenuOpen(false)}>{item.label}</Link>)}{wallet.account && <Link className={location.pathname === '/wallet' ? 'active' : ''} to="/wallet" onClick={() => setMenuOpen(false)}>Wallet</Link>}{!wallet.account && <button className="nav-connect" onClick={() => { setMenuOpen(false); onConnect() }} disabled={isConnecting} style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--mint)', color: '#07100b', border: 0, padding: '12px 16px', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}><Wallet size={15} /> {isConnecting ? 'Connecting…' : 'Login / Connect wallet'}</button>}</nav><div className="header-actions"><button className="network"><span className="status-dot" /> ARC testnet <ChevronDown size={14} /></button>{wallet.account ? <Link className="connect" to="/wallet"><Wallet size={15} /> {formatWalletAddress(wallet.account)}</Link> : <button className="connect" onClick={onConnect} disabled={isConnecting}><Wallet size={15} /> {isConnecting ? 'Connecting...' : 'Connect wallet'}</button>}</div><button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={20} /> : <Menu size={20} />}</button></div>{wallet.error && <div className="container wallet-error" role="status">{wallet.error}</div>}</header>
 }
 
 function TokenMark({ variant, large = false }: { variant: string; large?: boolean }) {
@@ -236,7 +236,7 @@ function LaunchCard({ token }: { token: Token }) {
   return <Link to={`/token/${token.id}`} className={`launch-card card-${token.visual}`}><div className="launch-card-top"><div className="launch-card-identity"><TokenMark variant={token.visual} large /><div><div className="launch-card-name"><h3>{token.name}</h3><span>${token.ticker}</span></div><p>{token.description}</p><div className="launch-card-creator">created by <b>{token.creator}</b></div></div></div><strong className={`launch-change ${token.change < 0 ? 'negative' : 'positive'}`}>{token.change > 0 ? '+' : ''}{token.change}%</strong></div><div className="launch-chart-row"><MarketChart token={token} /><div className="launch-card-stats"><span><small>MARKET CAP</small><b>${(token.marketCap / 1000).toFixed(token.marketCap < 10000 ? 2 : 1)}K</b></span><span><small>VOLUME 24H</small><b>${(token.volume / 1000).toFixed(1)}K</b></span><span><small>HOLDERS</small><b><Users size={12} /> {token.holders}</b></span></div></div><div className="migration-progress"><div className="migration-progress-head"><span><TrendingUp size={13} /> {isMigrated ? 'Graduated & migrated' : token.status === 'graduating' ? 'Near graduation' : 'Bonding curve progress'}</span><b>{token.progress.toFixed(3)}%</b></div><div className={`migration-track ${isMigrated ? 'complete' : ''}`}><span style={{ width: `${token.progress}%` }} /><i style={{ left: `${Math.min(token.progress, 99.4)}%` }} /></div><div className="migration-foot"><span>{isMigrated ? 'Liquidity migrated to market' : `${(100 - token.progress).toFixed(1)}% until migration`}</span><small>{token.created}</small></div></div></Link>
 }
 
-function Explore({ onConnect, wallet, isConnecting, tokens, tokensLoading, tokensError, onRefresh }: { onConnect: () => void; wallet: WalletState; isConnecting: boolean; tokens: Token[]; tokensLoading: boolean; tokensError: string | null; onRefresh: () => void }) {
+function Explore({ tokens, tokensLoading, tokensError, onRefresh }: { tokens: Token[]; tokensLoading: boolean; tokensError: string | null; onRefresh: () => void }) {
   const [filter, setFilter] = useState('Trending')
   const [statusFilter, setStatusFilter] = useState<MigrationStatus | 'all'>('all')
   const [search, setSearch] = useState('')
@@ -245,11 +245,12 @@ function Explore({ onConnect, wallet, isConnecting, tokens, tokensLoading, token
   if (tokensLoading) return <main className="home-shell"><div className="container" style={{ padding: '120px 32px', textAlign: 'center' }}><div className="eyebrow"><span className="pulse" /> Loading on-chain data</div><h2 style={{ marginTop: 16 }}>Reading launches from Arc testnet…</h2></div></main>
   if (tokensError) return <main className="home-shell"><div className="container" style={{ padding: '120px 32px', textAlign: 'center' }}><div className="eyebrow" style={{ color: 'var(--market-negative)' }}>Connection error</div><h2 style={{ marginTop: 16 }}>{tokensError}</h2><button className="button primary" onClick={onRefresh} style={{ marginTop: 20 }}>Retry</button></div></main>
   if (tokens.length === 0) return <main className="home-shell"><div className="container" style={{ padding: '120px 32px', textAlign: 'center' }}><div className="eyebrow"><span className="pulse" /> No launches yet</div><h2 style={{ marginTop: 16 }}>No tokens have been launched on this contract yet.</h2><Link className="button primary" to="/create" style={{ marginTop: 20 }}>Create the first launch <ArrowUpRight size={16} /></Link></div></main>
-  return <main className="home-shell"><section className="home-hero container"><div className="home-hero-copy"><div className="eyebrow"><span className="pulse" /> ARC / USDC launchpad</div><h1>Launch early.<br /><span>Trade loud.</span></h1><p>A live board for the tokens forming conviction on Arc. Find the newest launches, watch the curve fill, and move before the crowd.</p><div className="hero-actions"><Link className="button primary" to="/create">Create launch <ArrowUpRight size={16} /></Link><a className="text-link" href="#explore">View new launches <span>↓</span></a></div><div className="home-stats"><span><b>{String(tokens.length).padStart(2, '0')}</b> tracked launches</span><span><b>01%</b> platform fee</span><span><b>ARC</b> testnet live</span></div></div><div className="signal-panel"><div className="signal-panel-top"><span><span className="pulse" /> Featured curve</span><span>{String(Math.min(trending.length, 3)).padStart(2, '0')} / 03</span></div><div className="signal-token"><TokenMark variant={trending[0].visual} large /><div><span className="signal-kicker">Moving now</span><h2>{trending[0].name}</h2><strong>${trending[0].ticker}</strong></div><b className="positive">{trending[0].progress.toFixed(1)}%</b></div><div className="signal-chart"><TradingViewMarketChart token={trending[0]} large /></div><div className="signal-metrics"><span><small>PRICE</small>${trending[0].price.toFixed(5)}</span><span><small>MARKET CAP</small>${(trending[0].marketCap / 1000).toFixed(1)}K</span><span><small>CURVE</small>{trending[0].progress.toFixed(1)}%</span></div><Link className="signal-link" to={`/token/${trending[0].id}`}>Open terminal <ArrowUpRight size={15} /></Link></div></section><LiveTape /><section id="explore" className="launch-board container"><div className="board-heading"><div><div className="eyebrow">Launch terminal</div><h2>Find your next <span>runner.</span></h2><p>Fresh launches and curves in motion, sorted for fast decisions.</p></div><div className="board-count"><strong>{filteredTokens.length}</strong><span>visible launches</span></div></div><div className="board-controls"><div className="filters">{['Trending', 'New launches', 'Graduating'].map((item) => <button key={item} className={filter === item ? 'filter active' : 'filter'} onClick={() => setFilter(item)}>{item}</button>)}</div><div className="search-box"><Search size={16} /><input aria-label="Search tokens" placeholder="Search ticker or launch" value={search} onChange={(event) => setSearch(event.target.value)} /></div></div><div className="launch-discovery-bar"><div className="launch-status-tabs">{([{ value: 'all', label: 'All tokens' }, { value: 'active', label: 'Bonding' }, { value: 'graduating', label: 'Near graduation' }, { value: 'migrated', label: 'Migrated' }] as const).map((item) => <button key={item.value} className={statusFilter === item.value ? 'active' : ''} onClick={() => setStatusFilter(item.value)}>{item.label}</button>)}</div><div className="launch-toolbar-actions"><button onClick={onRefresh} style={{ background: 'transparent', border: '1px solid #2c4333', color: '#70dc8b', borderRadius: 8, padding: '6px 10px', font: '10px DM Mono', cursor: 'pointer' }}>Refresh</button><span><Flame size={14} /> Live board</span><button aria-label="Grid view" className="view-toggle active"><Grid2X2 size={15} /></button><button aria-label="Filter options" className="view-toggle"><ListFilter size={15} /></button></div></div><div className="launch-grid">{filteredTokens.map((token) => <LaunchCard key={token.id} token={token} />)}</div></section><MobileNav onConnect={onConnect} wallet={wallet} isConnecting={isConnecting} /></main>
+  return <main className="home-shell"><section className="home-hero container"><div className="home-hero-copy"><div className="eyebrow"><span className="pulse" /> ARC / USDC launchpad</div><h1>Launch early.<br /><span>Trade loud.</span></h1><p>A live board for the tokens forming conviction on Arc. Find the newest launches, watch the curve fill, and move before the crowd.</p><div className="hero-actions"><Link className="button primary" to="/create">Create launch <ArrowUpRight size={16} /></Link><a className="text-link" href="#explore">View new launches <span>↓</span></a></div><div className="home-stats"><span><b>{String(tokens.length).padStart(2, '0')}</b> tracked launches</span><span><b>01%</b> platform fee</span><span><b>ARC</b> testnet live</span></div></div><div className="signal-panel"><div className="signal-panel-top"><span><span className="pulse" /> Featured curve</span><span>{String(Math.min(trending.length, 3)).padStart(2, '0')} / 03</span></div><div className="signal-token"><TokenMark variant={trending[0].visual} large /><div><span className="signal-kicker">Moving now</span><h2>{trending[0].name}</h2><strong>${trending[0].ticker}</strong></div><b className="positive">{trending[0].progress.toFixed(1)}%</b></div><div className="signal-chart"><TradingViewMarketChart token={trending[0]} large /></div><div className="signal-metrics"><span><small>PRICE</small>${trending[0].price.toFixed(5)}</span><span><small>MARKET CAP</small>${(trending[0].marketCap / 1000).toFixed(1)}K</span><span><small>CURVE</small>{trending[0].progress.toFixed(1)}%</span></div><Link className="signal-link" to={`/token/${trending[0].id}`}>Open terminal <ArrowUpRight size={15} /></Link></div></section><LiveTape /><section id="explore" className="launch-board container"><div className="board-heading"><div><div className="eyebrow">Launch terminal</div><h2>Find your next <span>runner.</span></h2><p>Fresh launches and curves in motion, sorted for fast decisions.</p></div><div className="board-count"><strong>{filteredTokens.length}</strong><span>visible launches</span></div></div><div className="board-controls"><div className="filters">{['Trending', 'New launches', 'Graduating'].map((item) => <button key={item} className={filter === item ? 'filter active' : 'filter'} onClick={() => setFilter(item)}>{item}</button>)}</div><div className="search-box"><Search size={16} /><input aria-label="Search tokens" placeholder="Search ticker or launch" value={search} onChange={(event) => setSearch(event.target.value)} /></div></div><div className="launch-discovery-bar"><div className="launch-status-tabs">{([{ value: 'all', label: 'All tokens' }, { value: 'active', label: 'Bonding' }, { value: 'graduating', label: 'Near graduation' }, { value: 'migrated', label: 'Migrated' }] as const).map((item) => <button key={item.value} className={statusFilter === item.value ? 'active' : ''} onClick={() => setStatusFilter(item.value)}>{item.label}</button>)}</div><div className="launch-toolbar-actions"><button onClick={onRefresh} style={{ background: 'transparent', border: '1px solid #2c4333', color: '#70dc8b', borderRadius: 8, padding: '6px 10px', font: '10px DM Mono', cursor: 'pointer' }}>Refresh</button><span><Flame size={14} /> Live board</span><button aria-label="Grid view" className="view-toggle active"><Grid2X2 size={15} /></button><button aria-label="Filter options" className="view-toggle"><ListFilter size={15} /></button></div></div><div className="launch-grid">{filteredTokens.map((token) => <LaunchCard key={token.id} token={token} />)}</div></section></main>
 }
 
-function MobileNav({ onConnect, wallet, isConnecting }: { onConnect: () => void; wallet: WalletState; isConnecting: boolean }) {
-  return <nav className="mobile-nav"><Link className="active" to="/"><Search size={19} /><span>Explore</span></Link><Link to="/create"><Sparkles size={19} /><span>Create</span></Link>{wallet.account ? <Link to="/wallet"><Wallet size={19} /><span>Wallet</span></Link> : <button onClick={onConnect} disabled={isConnecting}><Wallet size={19} /><span>Connect</span></button>}</nav>
+function MobileNav() {
+  const location = useLocation()
+  return <nav className="mobile-nav"><Link className={location.pathname === '/' ? 'active' : ''} to="/"><Search size={19} /><span>Explorer</span></Link><Link className={location.pathname === '/create' ? 'active' : ''} to="/create"><Sparkles size={19} /><span>Create</span></Link></nav>
 }
 
 function Create({ wallet, onConnect }: { wallet: WalletState; onConnect: () => void }) {
@@ -372,77 +373,99 @@ function MigrationCard({ status }: { status: MigrationStatus }) {
   return <div className={`migration-card ${migrated ? 'migrated' : ''}`}><div className="migration-icon">{migrated ? '✓' : <Zap size={20} />}</div><div><div className="eyebrow">{migrated ? 'Migration complete' : 'The roadmap'}</div><h3>{migrated ? 'Now trading on ARC mainnet' : status === 'graduating' ? 'Almost ready for the next stop' : 'Build toward the big move'}</h3><p>{migrated ? 'This token graduated from its bonding curve and is now available on the open market.' : 'At 100%, liquidity migrates to Uniswap on ARC Mainnet. This is a preview of what comes next.'}</p></div></div>
 }
 
+const ADMIN_BOTS_STORAGE = 'doxa_admin_bots'
 const ADMIN_KEY_STORAGE = 'doxa_admin_pk'
 
+type Bot = { privateKey: string; address: string; balance: string }
+type BuyResult = { address: string; hash?: string; error?: string }
+
+const inputStyle = { width: '100%', padding: '10px 12px', background: '#050706', border: '1px solid #28382f', borderRadius: 8, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 4 } as const
+const panelStyle = { padding: '22px 24px', background: '#0b100d', border: '1px solid #28382f', borderRadius: 14, marginBottom: 20 } as const
+
 function AdminPanel({ onRefreshTokens }: { onRefreshTokens: () => void }) {
-  const [privateKey, setPrivateKey] = useState('')
-  const [unlocked, setUnlocked] = useState(false)
-  const [botAddress, setBotAddress] = useState('')
-  const [botBalance, setBotBalance] = useState('')
+  const [bots, setBots] = useState<Bot[]>([])
+  const [newKey, setNewKey] = useState('')
+  const [addError, setAddError] = useState<string | null>(null)
+
   const [name, setName] = useState('')
   const [ticker, setTicker] = useState('')
   const [description, setDescription] = useState('')
+  const [createAddr, setCreateAddr] = useState('')
   const [createHash, setCreateHash] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+
   const [buyLaunchId, setBuyLaunchId] = useState('')
   const [buyAmount, setBuyAmount] = useState('')
-  const [buyHash, setBuyHash] = useState<string | null>(null)
+  const [selectedAddrs, setSelectedAddrs] = useState<string[]>([])
+  const [buyResults, setBuyResults] = useState<BuyResult[]>([])
   const [buyError, setBuyError] = useState<string | null>(null)
   const [isBuying, setIsBuying] = useState(false)
 
-  const loadStoredKey = () => {
-    const stored = localStorage.getItem(ADMIN_KEY_STORAGE)
-    if (stored) {
-      setPrivateKey(stored)
-      return stored
-    }
-    return null
+  const persist = (list: Bot[]) => localStorage.setItem(ADMIN_BOTS_STORAGE, JSON.stringify(list.map((b) => b.privateKey)))
+
+  const refreshBalance = (address: string) => {
+    void readNativeBalanceDirect(address).then((bal) => setBots((cur) => cur.map((b) => b.address === address ? { ...b, balance: bal } : b))).catch(() => { /* ignore */ })
   }
 
   useEffect(() => {
-    const stored = loadStoredKey()
-    if (stored) {
-      try {
-        const addr = getAccountFromPrivateKey(stored)
-        setBotAddress(addr)
-        setUnlocked(true)
-        void readNativeBalanceDirect(addr).then(setBotBalance)
-      } catch { /* invalid key */ }
+    const keys: string[] = []
+    const raw = localStorage.getItem(ADMIN_BOTS_STORAGE)
+    if (raw) { try { for (const k of JSON.parse(raw) as string[]) keys.push(k) } catch { /* ignore */ } }
+    const legacy = localStorage.getItem(ADMIN_KEY_STORAGE)
+    if (legacy && !keys.includes(legacy)) keys.push(legacy)
+    const loaded: Bot[] = []
+    for (const k of keys) {
+      try { loaded.push({ privateKey: k, address: getAccountFromPrivateKey(k), balance: '' }) } catch { /* skip invalid */ }
     }
+    setBots(loaded)
+    loaded.forEach((b) => refreshBalance(b.address))
   }, [])
 
-  const handleUnlock = () => {
-    if (!privateKey.trim()) return
-    try {
-      const addr = getAccountFromPrivateKey(privateKey.trim())
-      setBotAddress(addr)
-      setUnlocked(true)
-      localStorage.setItem(ADMIN_KEY_STORAGE, privateKey.trim())
-      void readNativeBalanceDirect(addr).then(setBotBalance)
-    } catch {
-      setCreateError('Invalid private key format.')
-    }
+  const addBot = () => {
+    setAddError(null)
+    const key = newKey.trim()
+    if (!key) return
+    let address: string
+    try { address = getAccountFromPrivateKey(key) } catch { setAddError('Invalid private key format.'); return }
+    if (bots.some((b) => b.address.toLowerCase() === address.toLowerCase())) { setAddError('This bot is already added.'); return }
+    const list = [...bots, { privateKey: key, address, balance: '' }]
+    setBots(list)
+    persist(list)
+    setNewKey('')
+    refreshBalance(address)
   }
 
-  const handleLock = () => {
-    localStorage.removeItem(ADMIN_KEY_STORAGE)
-    setPrivateKey('')
-    setUnlocked(false)
-    setBotAddress('')
-    setBotBalance('')
+  const removeBot = (address: string) => {
+    const list = bots.filter((b) => b.address !== address)
+    setBots(list)
+    persist(list)
+    setSelectedAddrs((cur) => cur.filter((a) => a !== address))
   }
+
+  const lockAll = () => {
+    localStorage.removeItem(ADMIN_BOTS_STORAGE)
+    localStorage.removeItem(ADMIN_KEY_STORAGE)
+    setBots([])
+    setSelectedAddrs([])
+  }
+
+  const toggleSelected = (address: string) => setSelectedAddrs((cur) => cur.includes(address) ? cur.filter((a) => a !== address) : [...cur, address])
+  const allSelected = bots.length > 0 && selectedAddrs.length === bots.length
+  const toggleAll = () => setSelectedAddrs(allSelected ? [] : bots.map((b) => b.address))
 
   const handleCreate = async () => {
     setCreateError(null)
     setCreateHash(null)
+    const signer = bots.find((b) => b.address === createAddr) ?? bots[0]
+    if (!signer) { setCreateError('Add a bot first.'); return }
     if (!name.trim() || !ticker.trim() || !description.trim()) {
       setCreateError('Name, ticker, and description are required.')
       return
     }
     setIsCreating(true)
     try {
-      const hash = await createLaunchWithPrivateKey(privateKey.trim(), name.trim(), ticker.trim(), description.trim())
+      const hash = await createLaunchWithPrivateKey(signer.privateKey, name.trim(), ticker.trim(), description.trim())
       setCreateHash(hash)
       void onRefreshTokens()
     } catch (err) {
@@ -452,78 +475,92 @@ function AdminPanel({ onRefreshTokens }: { onRefreshTokens: () => void }) {
     }
   }
 
-  const handleBuy = async () => {
+  const handleCoordinatedBuy = async () => {
     setBuyError(null)
-    setBuyHash(null)
+    setBuyResults([])
     const launchId = Number(buyLaunchId)
     const amount = Number(buyAmount)
-    if (!Number.isFinite(launchId) || launchId < 0) {
-      setBuyError('Valid launch ID is required.')
-      return
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setBuyError('Valid USDC amount is required.')
-      return
-    }
+    if (!Number.isFinite(launchId) || launchId < 0) { setBuyError('Valid launch ID is required.'); return }
+    if (!Number.isFinite(amount) || amount <= 0) { setBuyError('Valid USDC amount is required.'); return }
+    const targets = bots.filter((b) => selectedAddrs.includes(b.address))
+    if (targets.length === 0) { setBuyError('Select at least one bot to buy with.'); return }
     setIsBuying(true)
-    try {
-      const nativeIn = BigInt(Math.round(amount * 1e18))
-      const hash = await buyWithPrivateKey(privateKey.trim(), launchId, nativeIn)
-      setBuyHash(hash)
-      void onRefreshTokens()
-      void readNativeBalanceDirect(botAddress).then(setBotBalance)
-    } catch (err) {
-      setBuyError(err instanceof Error ? err.message : 'Failed to buy token.')
-    } finally {
-      setIsBuying(false)
-    }
+    const nativeIn = BigInt(Math.round(amount * 1e18))
+    const settled = await Promise.allSettled(targets.map((b) => buyWithPrivateKey(b.privateKey, launchId, nativeIn)))
+    setBuyResults(targets.map((b, i) => {
+      const r = settled[i]
+      return r.status === 'fulfilled' ? { address: b.address, hash: r.value } : { address: b.address, error: r.reason instanceof Error ? r.reason.message : 'Failed' }
+    }))
+    void onRefreshTokens()
+    targets.forEach((b) => refreshBalance(b.address))
+    setIsBuying(false)
   }
 
-  if (!unlocked) {
+  if (bots.length === 0) {
     return <main className="container page" style={{ paddingTop: 80, maxWidth: 460 }}>
       <div className="eyebrow" style={{ color: 'var(--market-warning)' }}>Admin / Bot control</div>
-      <h1 style={{ fontSize: 28, marginTop: 8 }}>Unlock admin panel</h1>
-      <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 8 }}>Enter the bot wallet private key. It is stored in your browser's localStorage and never sent to any server.</p>
-      <input type="password" value={privateKey} onChange={(e) => setPrivateKey(e.target.value)} placeholder="0x... private key" style={{ width: '100%', padding: '12px 14px', background: '#0b100d', border: '1px solid #28382f', borderRadius: 10, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 16 }} />
-      <button className="button primary" onClick={handleUnlock} style={{ marginTop: 14, width: '100%' }}>Unlock</button>
-      {createError && <p className="form-error" role="alert" style={{ marginTop: 12 }}>{createError}</p>}
+      <h1 style={{ fontSize: 28, marginTop: 8 }}>Add your first bot</h1>
+      <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 8 }}>Paste a bot wallet private key to begin. You can add several bots and have them buy together. Keys are stored only in your browser's localStorage and never sent to any server.</p>
+      <input type="password" value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder="0x... private key" style={{ ...inputStyle, marginTop: 16 }} />
+      <button className="button primary" onClick={addBot} style={{ marginTop: 14, width: '100%' }}>Add bot</button>
+      {addError && <p className="form-error" role="alert" style={{ marginTop: 12 }}>{addError}</p>}
     </main>
   }
 
-  return <main className="container page" style={{ paddingTop: 60, maxWidth: 580 }}>
+  return <main className="container page" style={{ paddingTop: 60, maxWidth: 620 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
       <div>
         <div className="eyebrow" style={{ color: 'var(--market-warning)' }}>Admin / Bot control</div>
         <h1 style={{ fontSize: 26, marginTop: 8 }}>Bot dashboard</h1>
       </div>
-      <button onClick={handleLock} style={{ background: 'transparent', border: '1px solid #28382f', color: 'var(--muted)', borderRadius: 8, padding: '8px 14px', font: '11px DM Mono', cursor: 'pointer' }}>Lock & clear key</button>
+      <button onClick={lockAll} style={{ background: 'transparent', border: '1px solid #28382f', color: 'var(--muted)', borderRadius: 8, padding: '8px 14px', font: '11px DM Mono', cursor: 'pointer' }}>Lock & clear keys</button>
     </div>
-    <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
-      <div style={{ flex: '1 1 200px', padding: '16px 18px', background: '#0b100d', border: '1px solid #28382f', borderRadius: 12 }}>
-        <small style={{ color: 'var(--muted)', font: '10px DM Mono', letterSpacing: '.04em' }}>BOT ADDRESS</small>
-        <div style={{ font: '12px DM Mono', marginTop: 6, wordBreak: 'break-all' }}>{botAddress}</div>
+
+    <div style={panelStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, margin: 0 }}>Bots ({bots.length})</h2>
+        <button onClick={toggleAll} style={{ background: 'transparent', border: '1px solid #28382f', color: 'var(--mint)', borderRadius: 8, padding: '6px 12px', font: '10px DM Mono', cursor: 'pointer' }}>{allSelected ? 'Deselect all' : 'Select all'}</button>
       </div>
-      <div style={{ flex: '1 1 120px', padding: '16px 18px', background: '#0b100d', border: '1px solid #28382f', borderRadius: 12 }}>
-        <small style={{ color: 'var(--muted)', font: '10px DM Mono', letterSpacing: '.04em' }}>USDC BALANCE</small>
-        <div style={{ font: '14px DM Mono', marginTop: 6, color: 'var(--market-positive)' }}>{botBalance || '—'}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        {bots.map((b, i) => <div key={b.address} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#050706', border: `1px solid ${selectedAddrs.includes(b.address) ? 'var(--mint)' : '#28382f'}`, borderRadius: 10 }}>
+          <input type="checkbox" checked={selectedAddrs.includes(b.address)} onChange={() => toggleSelected(b.address)} style={{ accentColor: '#2ee6a0', width: 16, height: 16 }} aria-label={`Select bot ${i + 1}`} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ font: '10px DM Mono', color: 'var(--muted)' }}>BOT {String(i + 1).padStart(2, '0')}</div>
+            <div style={{ font: '12px DM Mono', wordBreak: 'break-all' }}>{b.address}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ font: '9px DM Mono', color: 'var(--muted)' }}>USDC</div>
+            <div style={{ font: '13px DM Mono', color: 'var(--market-positive)' }}>{b.balance || '—'}</div>
+          </div>
+          <button onClick={() => removeBot(b.address)} aria-label="Remove bot" style={{ background: 'transparent', border: '1px solid #28382f', color: 'var(--market-negative)', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', display: 'flex' }}><X size={14} /></button>
+        </div>)}
       </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input type="password" value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder="0x... add another bot" style={{ ...inputStyle, marginTop: 0, flex: 1 }} />
+        <button className="button primary" onClick={addBot} style={{ whiteSpace: 'nowrap' }}>Add bot</button>
+      </div>
+      {addError && <p className="form-error" role="alert" style={{ marginTop: 10 }}>{addError}</p>}
     </div>
-    <div style={{ padding: '22px 24px', background: '#0b100d', border: '1px solid #28382f', borderRadius: 14, marginBottom: 20 }}>
+
+    <div style={panelStyle}>
+      <h2 style={{ fontSize: 16, marginBottom: 16 }}>Coordinated buy (simultaneous)</h2>
+      <p style={{ color: 'var(--muted)', fontSize: 12, margin: '0 0 16px' }}>Fires a buy from every selected bot at the same time — {selectedAddrs.length} bot{selectedAddrs.length === 1 ? '' : 's'} selected.</p>
+      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>LAUNCH ID</span><input value={buyLaunchId} onChange={(e) => setBuyLaunchId(e.target.value.replace(/[^0-9]/g, ''))} placeholder="0" inputMode="numeric" style={inputStyle} /></label>
+      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>USDC AMOUNT (PER BOT)</span><input value={buyAmount} onChange={(e) => setBuyAmount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="10.0" inputMode="decimal" style={inputStyle} /></label>
+      <button className="button primary" onClick={handleCoordinatedBuy} disabled={isBuying} style={{ marginTop: 4 }}>{isBuying ? 'Sending...' : `Buy with ${selectedAddrs.length || 'selected'} bot${selectedAddrs.length === 1 ? '' : 's'}`}</button>
+      {buyError && <p className="form-error" role="alert" style={{ marginTop: 10 }}>{buyError}</p>}
+      {buyResults.length > 0 && <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>{buyResults.map((r) => <div key={r.address} style={{ font: '11px DM Mono', padding: '8px 10px', background: '#050706', border: '1px solid #28382f', borderRadius: 8 }}><span style={{ color: 'var(--muted)' }}>{formatWalletAddress(r.address)}</span> {r.hash ? <span className="form-success">→ <a href={`${ARC_TESTNET.explorerUrl}/tx/${r.hash}`} target="_blank" rel="noreferrer">{formatWalletAddress(r.hash)}</a></span> : <span style={{ color: 'var(--market-negative)' }}>→ {r.error}</span>}</div>)}</div>}
+    </div>
+
+    <div style={{ ...panelStyle, marginBottom: 0 }}>
       <h2 style={{ fontSize: 16, marginBottom: 16 }}>Create token</h2>
-      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>NAME</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Token name" maxLength={28} style={{ width: '100%', padding: '10px 12px', background: '#050706', border: '1px solid #28382f', borderRadius: 8, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 4 }} /></label>
-      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>TICKER</span><input value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))} placeholder="TICKER" maxLength={8} style={{ width: '100%', padding: '10px 12px', background: '#050706', border: '1px solid #28382f', borderRadius: 8, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 4 }} /></label>
-      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>DESCRIPTION</span><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" maxLength={120} style={{ width: '100%', padding: '10px 12px', background: '#050706', border: '1px solid #28382f', borderRadius: 8, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 4 }} /></label>
+      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>SIGNER BOT</span><select value={createAddr || bots[0]?.address || ''} onChange={(e) => setCreateAddr(e.target.value)} style={inputStyle}>{bots.map((b, i) => <option key={b.address} value={b.address}>Bot {String(i + 1).padStart(2, '0')} — {formatWalletAddress(b.address)}</option>)}</select></label>
+      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>NAME</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Token name" maxLength={28} style={inputStyle} /></label>
+      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>TICKER</span><input value={ticker} onChange={(e) => setTicker(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))} placeholder="TICKER" maxLength={8} style={inputStyle} /></label>
+      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>DESCRIPTION</span><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" maxLength={120} style={inputStyle} /></label>
       <button className="button primary" onClick={handleCreate} disabled={isCreating} style={{ marginTop: 4 }}>{isCreating ? 'Sending...' : 'Create token'}</button>
       {createHash && <p className="form-success" style={{ marginTop: 10 }}>TX: <a href={`${ARC_TESTNET.explorerUrl}/tx/${createHash}`} target="_blank" rel="noreferrer">{formatWalletAddress(createHash)}</a></p>}
       {createError && <p className="form-error" role="alert" style={{ marginTop: 10 }}>{createError}</p>}
-    </div>
-    <div style={{ padding: '22px 24px', background: '#0b100d', border: '1px solid #28382f', borderRadius: 14 }}>
-      <h2 style={{ fontSize: 16, marginBottom: 16 }}>Buy token</h2>
-      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>LAUNCH ID</span><input value={buyLaunchId} onChange={(e) => setBuyLaunchId(e.target.value.replace(/[^0-9]/g, ''))} placeholder="0" inputMode="numeric" style={{ width: '100%', padding: '10px 12px', background: '#050706', border: '1px solid #28382f', borderRadius: 8, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 4 }} /></label>
-      <label style={{ display: 'block', marginBottom: 12 }}><span style={{ font: '10px DM Mono', color: 'var(--muted)' }}>USDC AMOUNT</span><input value={buyAmount} onChange={(e) => setBuyAmount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="10.0" inputMode="decimal" style={{ width: '100%', padding: '10px 12px', background: '#050706', border: '1px solid #28382f', borderRadius: 8, color: '#f1f6f3', fontFamily: 'DM Mono, monospace', fontSize: 13, marginTop: 4 }} /></label>
-      <button className="button primary" onClick={handleBuy} disabled={isBuying} style={{ marginTop: 4 }}>{isBuying ? 'Sending...' : 'Buy with bot wallet'}</button>
-      {buyHash && <p className="form-success" style={{ marginTop: 10 }}>TX: <a href={`${ARC_TESTNET.explorerUrl}/tx/${buyHash}`} target="_blank" rel="noreferrer">{formatWalletAddress(buyHash)}</a></p>}
-      {buyError && <p className="form-error" role="alert" style={{ marginTop: 10 }}>{buyError}</p>}
     </div>
   </main>
 }
@@ -531,7 +568,7 @@ function AdminPanel({ onRefreshTokens }: { onRefreshTokens: () => void }) {
 function App() {
   const { wallet, connect, isConnecting } = useArcWallet()
   const { tokens, loading: tokensLoading, error: tokensError, refresh: refreshTokens } = useOnChainTokens()
-  return <><Header wallet={wallet} onConnect={connect} isConnecting={isConnecting} /><Routes><Route path="/" element={<Explore onConnect={connect} wallet={wallet} isConnecting={isConnecting} tokens={tokens} tokensLoading={tokensLoading} tokensError={tokensError} onRefresh={refreshTokens} />} /><Route path="/create" element={<Create wallet={wallet} onConnect={connect} />} /><Route path="/wallet" element={<WalletDashboard wallet={wallet} onConnect={connect} isConnecting={isConnecting} />} /><Route path="/token/:id" element={<Detail onConnect={connect} wallet={wallet} tokens={tokens} />} /><Route path="/admin" element={<AdminPanel onRefreshTokens={refreshTokens} />} /></Routes><footer className="site-footer"><div className="container footer-inner"><Logo /><span>Built for the ARC testnet.</span><span className="footer-right">DOXA.xyz / 2026</span></div></footer></>
+  return <><Header wallet={wallet} onConnect={connect} isConnecting={isConnecting} /><Routes><Route path="/" element={<Explore tokens={tokens} tokensLoading={tokensLoading} tokensError={tokensError} onRefresh={refreshTokens} />} /><Route path="/create" element={<Create wallet={wallet} onConnect={connect} />} /><Route path="/wallet" element={<WalletDashboard wallet={wallet} onConnect={connect} isConnecting={isConnecting} />} /><Route path="/token/:id" element={<Detail onConnect={connect} wallet={wallet} tokens={tokens} />} /><Route path="/admin" element={<AdminPanel onRefreshTokens={refreshTokens} />} /></Routes><MobileNav /><footer className="site-footer"><div className="container footer-inner"><Logo /><span>Built for the ARC testnet.</span><span className="footer-right"><Link to="/admin" style={{ color: 'inherit', marginRight: 16 }}>Admin panel</Link>DOXA.xyz / 2026</span></div></footer></>
 }
 
 export default App
